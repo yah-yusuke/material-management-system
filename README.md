@@ -20,6 +20,10 @@ Excelファイルから発注チェックリストと仕入チェックリスト
 
 材料の在庫を一元管理し、入出庫履歴の追跡、在庫推移の分析、アラート通知を行う包括的な在庫管理システムです。
 
+### 3. ⚛️ 材料在庫管理システム - React版 (`react-inventory/`)
+
+上記の在庫管理システムをReactで実装したモダンなSPAバージョンです。同じ機能をReactのコンポーネントベースで提供します。
+
 **主要機能:**
 
 #### 📝 材料マスタ管理
@@ -82,7 +86,7 @@ Excelファイルから発注チェックリストと仕入チェックリスト
 2. 「サンプルデータで動作確認」でテスト
 3. または発注・仕入チェックリストのExcelファイルをアップロード
 
-### 材料在庫管理システム
+### 材料在庫管理システム（HTML版）
 1. `inventory.html` をブラウザで開く
 2. サンプルデータが自動的に読み込まれます
 3. タブを切り替えて各機能を利用:
@@ -94,6 +98,22 @@ Excelファイルから発注チェックリストと仕入チェックリスト
    - **履歴**: 入出庫履歴の確認
    - **レポート**: 在庫分析レポートの生成
 
+### 材料在庫管理システム（React版）
+1. プロジェクトディレクトリに移動
+   ```bash
+   cd react-inventory
+   ```
+2. 依存関係をインストール
+   ```bash
+   npm install
+   ```
+3. 開発サーバーを起動
+   ```bash
+   npm run dev
+   ```
+4. ブラウザで `http://localhost:5173` を開く
+5. サンプルデータが自動的に読み込まれます
+
 ## セットアップ
 
 ```bash
@@ -104,11 +124,20 @@ cd material-management-system
 
 ## 技術仕様
 
+### HTML版（index.html, inventory.html）
 - 純粋なHTML/CSS/JavaScript
 - Excel読み込み: [SheetJS](https://sheetjs.com/)
 - グラフ表示: [Chart.js](https://www.chartjs.org/)
 - データ永続化: localStorage API
 - 外部依存なし（CDN経由でライブラリ使用）
+
+### React版（react-inventory/）
+- フレームワーク: React 18.2
+- ビルドツール: Vite 5.0
+- グラフライブラリ: Chart.js 4.4 + react-chartjs-2
+- Excelライブラリ: SheetJS (xlsx)
+- スタイリング: Vanilla CSS
+- データ永続化: localStorage API
 
 ## ブラウザ対応
 
