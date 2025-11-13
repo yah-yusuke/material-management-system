@@ -1,5 +1,9 @@
 # 材料管理システム
 
+[![Deploy to GitHub Pages](https://github.com/yah-yusuke/material-management-system/actions/workflows/deploy.yml/badge.svg)](https://github.com/yah-yusuke/material-management-system/actions/workflows/deploy.yml)
+
+**🌐 公開URL**: https://yah-yusuke.github.io/material-management-system/
+
 材料の発注・仕入管理と在庫管理を統合したWebアプリケーション群です。
 
 ## システム一覧
@@ -23,6 +27,15 @@ Excelファイルから発注チェックリストと仕入チェックリスト
 ### 3. ⚛️ 材料在庫管理システム - React版 (`react-inventory/`)
 
 上記の在庫管理システムをReactで実装したモダンなSPAバージョンです。同じ機能をReactのコンポーネントベースで提供します。
+
+**🚀 PWA機能:**
+- 📱 スマホアプリとしてインストール可能
+- 📷 バーコード/QRコードスキャン
+- 🔄 オフライン動作とバックグラウンド同期
+- 🔔 プッシュ通知（在庫アラート）
+- 📦 一括バーコードスキャン
+- 📜 スキャン履歴管理
+- 📳 バイブレーションフィードバック
 
 ### 4. 🔌 バックエンドAPI + データベース (`backend/`)
 
@@ -117,6 +130,17 @@ SQLiteデータベースを使用したRESTful APIサーバー。フロントエ
    - **レポート**: 在庫分析レポートの生成
 
 ### 材料在庫管理システム（React版）
+
+#### 📱 モバイル/公開版（推奨）
+1. スマホのブラウザで以下のURLにアクセス:
+   ```
+   https://yah-yusuke.github.io/material-management-system/
+   ```
+2. PWAとしてインストール:
+   - **Android**: 「ホーム画面に追加」をタップ
+   - **iOS**: 共有ボタン □↑ → 「ホーム画面に追加」
+
+#### 💻 ローカル開発版
 1. プロジェクトディレクトリに移動
    ```bash
    cd react-inventory
@@ -180,8 +204,12 @@ cd material-management-system
 - ビルドツール: Vite 5.0
 - グラフライブラリ: Chart.js 4.4 + react-chartjs-2
 - Excelライブラリ: SheetJS (xlsx)
+- バーコードスキャン: html5-qrcode
+- QRコード生成: qrcode
 - スタイリング: Vanilla CSS
 - データ永続化: localStorage API
+- PWA機能: Service Worker, Web App Manifest
+- デプロイ: GitHub Pages + GitHub Actions
 
 ### バックエンドAPI（backend/）
 - ランタイム: Node.js
@@ -197,6 +225,15 @@ cd material-management-system
 - Firefox
 - Safari
 - Edge
+
+## 📚 ドキュメント
+
+- [デプロイメントガイド](DEPLOYMENT-GUIDE.md) - GitHub Pagesへのデプロイ方法
+- [モバイルアクセスガイド](react-inventory/MOBILE-ACCESS-GUIDE.md) - モバイルからのアクセス方法
+- [高度な機能ガイド](react-inventory/ADVANCED-FEATURES-GUIDE.md) - PWA機能の詳細説明
+- [統合サンプル](react-inventory/INTEGRATION-EXAMPLE.md) - コンポーネントの統合方法
+- [PWAモバイルガイド](react-inventory/PWA-MOBILE-GUIDE.md) - PWA機能の使い方
+- [アイコン作成ガイド](react-inventory/CREATE-ICONS.md) - アプリアイコンの作成方法
 
 ## 注意事項
 
