@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>材料在庫管理システム</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+            color: #2d3748;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1em;
+        }
+
+        /* アラート通知エリア */
+        .alerts-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .alert {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert.critical {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            border-left-color: #dc2626;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* タブナビゲーション */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* タブコンテンツ */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* カードレイアウト */
+        .card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .card h2 {
+            color: #2d3748;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* フォーム */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            background: #ffffff;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* ボタン */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+            color: white;
+        }
+
+        /* テーブル */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 15px;
+            text-align: left;
+            font-weight: 700;
+            color: #374151;
+            border-bottom: 2px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #475569;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        /* 統計カード */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        .stat-card.warning .stat-value {
+            color: #f59e0b;
+        }
+
+        .stat-card.danger .stat-value {
+            color: #dc2626;
+        }
+
+        .stat-card.success .stat-value {
+            color: #10b981;
+        }
+
+        .stat-card.primary .stat-value {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* バッジ */
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge.low-stock {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+        .badge.out-of-stock {
+            background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+            color: #7f1d1d;
+        }
+
+        .badge.in-stock {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+
+        /* グラフコンテナ */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-top: 20px;
+        }
+
+        /* モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* アクションボタン */
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn.edit {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .action-btn.delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* 検索フィルタ */
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+        }
+
+        /* データエクスポートボタン */
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* 履歴テーブル用スタイル */
+        .history-type {
+            font-weight: 600;
+        }
+
+        .history-type.in {
+            color: #10b981;
+        }
+
+        .history-type.out {
+            color: #ef4444;
+        }
+
+        .history-type.adjust {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="alerts-container" id="alertsContainer"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>📦 材料在庫管理システム</h1>
+            <p>在庫の入出庫管理、在庫推移分析、アラート通知を一元管理</p>
+        </div>
+
+        <!-- タブナビゲーション -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">📊 ダッシュボード</button>
+            <button class="tab-btn" onclick="switchTab('materials')">📝 材料マスタ</button>
+            <button class="tab-btn" onclick="switchTab('receiving')">📥 入庫管理</button>
+            <button class="tab-btn" onclick="switchTab('shipping')">📤 出庫管理</button>
+            <button class="tab-btn" onclick="switchTab('inventory')">📋 在庫照会</button>
+            <button class="tab-btn" onclick="switchTab('history')">📜 履歴</button>
+            <button class="tab-btn" onclick="switchTab('reports')">📈 レポート</button>
+        </div>
+
+        <!-- ダッシュボードタブ -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid" id="dashboardStats"></div>
+
+            <div class="card">
+                <h2>在庫アラート</h2>
+                <div id="stockAlerts"></div>
+            </div>
+
+            <div class="card">
+                <h2>在庫推移グラフ（直近30日）</h2>
+                <div class="chart-container">
+                    <canvas id="stockTrendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>材料別在庫状況</h2>
+                <div class="chart-container">
+                    <canvas id="materialStockChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 材料マスタタブ -->
+        <div id="materials" class="tab-content">
+            <div class="card">
+                <h2>材料マスタ登録</h2>
+                <form id="materialForm" onsubmit="saveMaterial(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>材料コード *</label>
+                            <input type="text" id="materialCode" required>
+                        </div>
+                        <div class="form-group">
+                            <label>材料名 *</label>
+                            <input type="text" id="materialName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>規格</label>
+                            <input type="text" id="materialSpec">
+                        </div>
+                        <div class="form-group">
+                            <label>単位 *</label>
+                            <select id="materialUnit" required>
+                                <option value="個">個</option>
+                                <option value="kg">kg</option>
+                                <option value="本">本</option>
+                                <option value="m">m</option>
+                                <option value="L">L</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>最低在庫数 *</label>
+                            <input type="number" id="minStock" required min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>適正在庫数</label>
+                            <input type="number" id="optimalStock" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>倉庫</label>
+                            <select id="warehouse">
+                                <option value="第1倉庫">第1倉庫</option>
+                                <option value="第2倉庫">第2倉庫</option>
+                                <option value="第3倉庫">第3倉庫</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>棚番号</label>
+                            <input type="text" id="shelfNumber">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>備考</label>
+                        <textarea id="materialRemarks" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">登録</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearMaterialForm()">クリア</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>材料一覧</h2>
+                <div class="filter-bar">
+                    <input type="text" id="materialSearchInput" placeholder="材料コード・材料名で検索" onkeyup="filterMaterials()">
+                    <select id="warehouseFilter" onchange="filterMaterials()">
+                        <option value="">全ての倉庫</option>
+                        <option value="第1倉庫">第1倉庫</option>
+                        <option value="第2倉庫">第2倉庫</option>
+                        <option value="第3倉庫">第3倉庫</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>材料コード</th>
+                                <th>材料名</th>
+                                <th>規格</th>
+                                <th>単位</th>
+                                <th>最低在庫数</th>
+                                <th>適正在庫数</th>
+                                <th>倉庫</th>
+                                <th>棚番号</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 入庫管理タブ -->
+        <div id="receiving" class="tab-content">
+            <div class="card">
+                <h2>入庫登録</h2>
+                <form id="receivingForm" onsubmit="saveReceiving(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>材料 *</label>
+                            <select id="receivingMaterial" required onchange="updateReceivingUnit()"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>入庫日 *</label>
+                            <input type="date" id="receivingDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>入庫数量 *</label>
+                            <input type="number" id="receivingQuantity" required min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>単位</label>
+                            <input type="text" id="receivingUnit" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>ロットNO</label>
+                            <input type="text" id="receivingLot">
+                        </div>
+                        <div class="form-group">
+                            <label>仕入先</label>
+                            <input type="text" id="receivingSupplier">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>備考</label>
+                        <textarea id="receivingRemarks" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">入庫登録</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearReceivingForm()">クリア</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 出庫管理タブ -->
+        <div id="shipping" class="tab-content">
+            <div class="card">
+                <h2>出庫登録</h2>
+                <form id="shippingForm" onsubmit="saveShipping(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>材料 *</label>
+                            <select id="shippingMaterial" required onchange="updateShippingUnit()"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>出庫日 *</label>
+                            <input type="date" id="shippingDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label>出庫数量 *</label>
+                            <input type="number" id="shippingQuantity" required min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>単位</label>
+                            <input type="text" id="shippingUnit" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>使用先</label>
+                            <input type="text" id="shippingDestination">
+                        </div>
+                        <div class="form-group">
+                            <label>工番</label>
+                            <input type="text" id="shippingJobNumber">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>備考</label>
+                        <textarea id="shippingRemarks" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success">出庫登録</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearShippingForm()">クリア</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 在庫照会タブ -->
+        <div id="inventory" class="tab-content">
+            <div class="card">
+                <h2>現在の在庫状況</h2>
+                <div class="export-buttons">
+                    <button class="btn btn-primary" onclick="exportInventoryToCSV()">CSV出力</button>
+                    <button class="btn btn-primary" onclick="exportInventoryToExcel()">Excel出力</button>
+                </div>
+                <div class="filter-bar">
+                    <input type="text" id="inventorySearchInput" placeholder="材料コード・材料名で検索" onkeyup="filterInventory()">
+                    <select id="inventoryStockFilter" onchange="filterInventory()">
+                        <option value="">全て</option>
+                        <option value="in-stock">在庫あり</option>
+                        <option value="low-stock">在庫僅少</option>
+                        <option value="out-of-stock">在庫切れ</option>
+                    </select>
+                    <select id="inventoryWarehouseFilter" onchange="filterInventory()">
+                        <option value="">全ての倉庫</option>
+                        <option value="第1倉庫">第1倉庫</option>
+                        <option value="第2倉庫">第2倉庫</option>
+                        <option value="第3倉庫">第3倉庫</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>材料コード</th>
+                                <th>材料名</th>
+                                <th>現在庫数</th>
+                                <th>単位</th>
+                                <th>最低在庫数</th>
+                                <th>適正在庫数</th>
+                                <th>状態</th>
+                                <th>倉庫</th>
+                                <th>棚番号</th>
+                                <th>最終更新</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 履歴タブ -->
+        <div id="history" class="tab-content">
+            <div class="card">
+                <h2>入出庫履歴</h2>
+                <div class="export-buttons">
+                    <button class="btn btn-primary" onclick="exportHistoryToCSV()">CSV出力</button>
+                    <button class="btn btn-primary" onclick="exportHistoryToExcel()">Excel出力</button>
+                </div>
+                <div class="filter-bar">
+                    <input type="date" id="historyDateFrom">
+                    <input type="date" id="historyDateTo">
+                    <select id="historyMaterialFilter" onchange="filterHistory()">
+                        <option value="">全ての材料</option>
+                    </select>
+                    <select id="historyTypeFilter" onchange="filterHistory()">
+                        <option value="">全ての種別</option>
+                        <option value="in">入庫</option>
+                        <option value="out">出庫</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="filterHistory()">検索</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>日付</th>
+                                <th>種別</th>
+                                <th>材料コード</th>
+                                <th>材料名</th>
+                                <th>数量</th>
+                                <th>単位</th>
+                                <th>在庫残</th>
+                                <th>備考</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- レポートタブ -->
+        <div id="reports" class="tab-content">
+            <div class="card">
+                <h2>在庫分析レポート</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>分析期間（開始）</label>
+                        <input type="date" id="reportDateFrom">
+                    </div>
+                    <div class="form-group">
+                        <label>分析期間（終了）</label>
+                        <input type="date" id="reportDateTo">
+                    </div>
+                    <div class="form-group">
+                        <label>分析対象材料</label>
+                        <select id="reportMaterial">
+                            <option value="">全ての材料</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="generateReport()">レポート生成</button>
+            </div>
+
+            <div class="card" id="reportResult" style="display: none;">
+                <h2>分析結果</h2>
+                <div id="reportStats" class="stats-grid"></div>
+                <div class="chart-container">
+                    <canvas id="reportChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // データ構造
+        let materials = [];
+        let transactions = [];
+        let inventory = {};
+
+        // チャートインスタンス
+        let stockTrendChart = null;
+        let materialStockChart = null;
+        let reportChart = null;
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 今日の日付を設定
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('receivingDate').value = today;
+            document.getElementById('shippingDate').value = today;
+
+            // データ読み込み
+            loadData();
+            updateAllMaterialSelects();
+            updateDashboard();
+            renderMaterialsTable();
+            renderInventoryTable();
+            renderHistoryTable();
+            checkStockAlerts();
+        });
+
+        // タブ切り替え
+        function switchTab(tabName) {
+            // 全てのタブを非アクティブに
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // 選択されたタブをアクティブに
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            // タブごとの更新処理
+            if (tabName === 'dashboard') {
+                updateDashboard();
+            } else if (tabName === 'inventory') {
+                renderInventoryTable();
+            } else if (tabName === 'history') {
+                renderHistoryTable();
+            }
+        }
+
+        // データ永続化
+        function saveData() {
+            localStorage.setItem('materials', JSON.stringify(materials));
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+        }
+
+        function loadData() {
+            const savedMaterials = localStorage.getItem('materials');
+            const savedTransactions = localStorage.getItem('transactions');
+            const savedInventory = localStorage.getItem('inventory');
+
+            if (savedMaterials) materials = JSON.parse(savedMaterials);
+            if (savedTransactions) transactions = JSON.parse(savedTransactions);
+            if (savedInventory) inventory = JSON.parse(savedInventory);
+
+            // サンプルデータがない場合は作成
+            if (materials.length === 0) {
+                createSampleData();
+            }
+        }
+
+        // サンプルデータ作成
+        function createSampleData() {
+            materials = [
+                {
+                    id: generateId(),
+                    code: 'MAT-001',
+                    name: 'ステンレス棒材',
+                    spec: 'SUS304 φ50×500L',
+                    unit: '本',
+                    minStock: 10,
+                    optimalStock: 30,
+                    warehouse: '第1倉庫',
+                    shelfNumber: 'A-01',
+                    remarks: ''
+                },
+                {
+                    id: generateId(),
+                    code: 'MAT-002',
+                    name: '鉄板',
+                    spec: 'SS400 t6×1000×2000',
+                    unit: '枚',
+                    minStock: 5,
+                    optimalStock: 15,
+                    warehouse: '第1倉庫',
+                    shelfNumber: 'B-03',
+                    remarks: ''
+                },
+                {
+                    id: generateId(),
+                    code: 'MAT-003',
+                    name: 'アルミ角材',
+                    spec: 'A5052 50×50×1000L',
+                    unit: '本',
+                    minStock: 20,
+                    optimalStock: 50,
+                    warehouse: '第2倉庫',
+                    shelfNumber: 'C-05',
+                    remarks: ''
+                }
+            ];
+
+            // 初期在庫設定
+            materials.forEach(material => {
+                inventory[material.code] = {
+                    quantity: material.optimalStock || material.minStock * 2,
+                    lastUpdated: new Date().toISOString()
+                };
+            });
+
+            // サンプル取引履歴
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            for (let i = 0; i < 30; i++) {
+                const date = new Date(thirtyDaysAgo);
+                date.setDate(date.getDate() + i);
+
+                materials.forEach(material => {
+                    // ランダムに入庫・出庫を記録
+                    if (Math.random() > 0.7) {
+                        const type = Math.random() > 0.5 ? 'in' : 'out';
+                        const quantity = Math.floor(Math.random() * 5) + 1;
+
+                        transactions.push({
+                            id: generateId(),
+                            date: date.toISOString().split('T')[0],
+                            type: type,
+                            materialCode: material.code,
+                            materialName: material.name,
+                            quantity: quantity,
+                            unit: material.unit,
+                            balance: inventory[material.code].quantity,
+                            remarks: type === 'in' ? '定期入庫' : '製造使用'
+                        });
+                    }
+                });
+            }
+
+            saveData();
+        }
+
+        // ID生成
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // 材料マスタ保存
+        function saveMaterial(event) {
+            event.preventDefault();
+
+            const material = {
+                id: generateId(),
+                code: document.getElementById('materialCode').value,
+                name: document.getElementById('materialName').value,
+                spec: document.getElementById('materialSpec').value,
+                unit: document.getElementById('materialUnit').value,
+                minStock: parseFloat(document.getElementById('minStock').value),
+                optimalStock: parseFloat(document.getElementById('optimalStock').value) || 0,
+                warehouse: document.getElementById('warehouse').value,
+                shelfNumber: document.getElementById('shelfNumber').value,
+                remarks: document.getElementById('materialRemarks').value
+            };
+
+            // 重複チェック
+            if (materials.some(m => m.code === material.code)) {
+                alert('この材料コードは既に登録されています。');
+                return;
+            }
+
+            materials.push(material);
+
+            // 初期在庫を0に設定
+            inventory[material.code] = {
+                quantity: 0,
+                lastUpdated: new Date().toISOString()
+            };
+
+            saveData();
+            clearMaterialForm();
+            renderMaterialsTable();
+            updateAllMaterialSelects();
+            showNotification('材料マスタを登録しました', 'success');
+        }
+
+        function clearMaterialForm() {
+            document.getElementById('materialForm').reset();
+        }
+
+        // 材料テーブル描画
+        function renderMaterialsTable() {
+            const tbody = document.getElementById('materialsTableBody');
+            const searchTerm = document.getElementById('materialSearchInput')?.value.toLowerCase() || '';
+            const warehouseFilter = document.getElementById('warehouseFilter')?.value || '';
+
+            const filteredMaterials = materials.filter(m => {
+                const matchesSearch = m.code.toLowerCase().includes(searchTerm) ||
+                                    m.name.toLowerCase().includes(searchTerm);
+                const matchesWarehouse = !warehouseFilter || m.warehouse === warehouseFilter;
+                return matchesSearch && matchesWarehouse;
+            });
+
+            tbody.innerHTML = filteredMaterials.map(material => `
+                <tr>
+                    <td>${material.code}</td>
+                    <td>${material.name}</td>
+                    <td>${material.spec}</td>
+                    <td>${material.unit}</td>
+                    <td>${material.minStock}</td>
+                    <td>${material.optimalStock || '-'}</td>
+                    <td>${material.warehouse}</td>
+                    <td>${material.shelfNumber}</td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn edit" onclick="editMaterial('${material.id}')">編集</button>
+                            <button class="action-btn delete" onclick="deleteMaterial('${material.id}')">削除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterMaterials() {
+            renderMaterialsTable();
+        }
+
+        function deleteMaterial(id) {
+            if (!confirm('この材料を削除してもよろしいですか？')) return;
+
+            materials = materials.filter(m => m.id !== id);
+            saveData();
+            renderMaterialsTable();
+            updateAllMaterialSelects();
+            showNotification('材料を削除しました', 'success');
+        }
+
+        // 材料セレクトボックス更新
+        function updateAllMaterialSelects() {
+            const selects = [
+                'receivingMaterial',
+                'shippingMaterial',
+                'historyMaterialFilter',
+                'reportMaterial'
+            ];
+
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+
+                const currentValue = select.value;
+                const isFilter = selectId.includes('Filter') || selectId === 'reportMaterial';
+
+                select.innerHTML = isFilter ? '<option value="">全ての材料</option>' : '';
+
+                materials.forEach(material => {
+                    const option = document.createElement('option');
+                    option.value = material.code;
+                    option.textContent = `${material.code} - ${material.name}`;
+                    select.appendChild(option);
+                });
+
+                if (currentValue) select.value = currentValue;
+            });
+        }
+
+        function updateReceivingUnit() {
+            const code = document.getElementById('receivingMaterial').value;
+            const material = materials.find(m => m.code === code);
+            document.getElementById('receivingUnit').value = material ? material.unit : '';
+        }
+
+        function updateShippingUnit() {
+            const code = document.getElementById('shippingMaterial').value;
+            const material = materials.find(m => m.code === code);
+            document.getElementById('shippingUnit').value = material ? material.unit : '';
+        }
+
+        // 入庫登録
+        function saveReceiving(event) {
+            event.preventDefault();
+
+            const materialCode = document.getElementById('receivingMaterial').value;
+            const material = materials.find(m => m.code === materialCode);
+            const quantity = parseFloat(document.getElementById('receivingQuantity').value);
+
+            if (!inventory[materialCode]) {
+                inventory[materialCode] = { quantity: 0, lastUpdated: new Date().toISOString() };
+            }
+
+            inventory[materialCode].quantity += quantity;
+            inventory[materialCode].lastUpdated = new Date().toISOString();
+
+            const transaction = {
+                id: generateId(),
+                date: document.getElementById('receivingDate').value,
+                type: 'in',
+                materialCode: materialCode,
+                materialName: material.name,
+                quantity: quantity,
+                unit: material.unit,
+                balance: inventory[materialCode].quantity,
+                lot: document.getElementById('receivingLot').value,
+                supplier: document.getElementById('receivingSupplier').value,
+                remarks: document.getElementById('receivingRemarks').value
+            };
+
+            transactions.push(transaction);
+            saveData();
+            clearReceivingForm();
+            showNotification('入庫を登録しました', 'success');
+            checkStockAlerts();
+        }
+
+        function clearReceivingForm() {
+            document.getElementById('receivingForm').reset();
+            document.getElementById('receivingDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        // 出庫登録
+        function saveShipping(event) {
+            event.preventDefault();
+
+            const materialCode = document.getElementById('shippingMaterial').value;
+            const material = materials.find(m => m.code === materialCode);
+            const quantity = parseFloat(document.getElementById('shippingQuantity').value);
+
+            if (!inventory[materialCode] || inventory[materialCode].quantity < quantity) {
+                alert('在庫が不足しています');
+                return;
+            }
+
+            inventory[materialCode].quantity -= quantity;
+            inventory[materialCode].lastUpdated = new Date().toISOString();
+
+            const transaction = {
+                id: generateId(),
+                date: document.getElementById('shippingDate').value,
+                type: 'out',
+                materialCode: materialCode,
+                materialName: material.name,
+                quantity: quantity,
+                unit: material.unit,
+                balance: inventory[materialCode].quantity,
+                destination: document.getElementById('shippingDestination').value,
+                jobNumber: document.getElementById('shippingJobNumber').value,
+                remarks: document.getElementById('shippingRemarks').value
+            };
+
+            transactions.push(transaction);
+            saveData();
+            clearShippingForm();
+            showNotification('出庫を登録しました', 'success');
+            checkStockAlerts();
+        }
+
+        function clearShippingForm() {
+            document.getElementById('shippingForm').reset();
+            document.getElementById('shippingDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        // 在庫照会テーブル
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            const searchTerm = document.getElementById('inventorySearchInput')?.value.toLowerCase() || '';
+            const stockFilter = document.getElementById('inventoryStockFilter')?.value || '';
+            const warehouseFilter = document.getElementById('inventoryWarehouseFilter')?.value || '';
+
+            const inventoryData = materials.map(material => {
+                const stock = inventory[material.code] || { quantity: 0, lastUpdated: '' };
+                const status = getStockStatus(stock.quantity, material.minStock);
+
+                return {
+                    ...material,
+                    currentStock: stock.quantity,
+                    lastUpdated: stock.lastUpdated,
+                    status: status
+                };
+            });
+
+            const filteredData = inventoryData.filter(item => {
+                const matchesSearch = item.code.toLowerCase().includes(searchTerm) ||
+                                    item.name.toLowerCase().includes(searchTerm);
+                const matchesStock = !stockFilter || item.status === stockFilter;
+                const matchesWarehouse = !warehouseFilter || item.warehouse === warehouseFilter;
+                return matchesSearch && matchesStock && matchesWarehouse;
+            });
+
+            tbody.innerHTML = filteredData.map(item => `
+                <tr>
+                    <td>${item.code}</td>
+                    <td>${item.name}</td>
+                    <td style="font-weight: 600;">${item.currentStock}</td>
+                    <td>${item.unit}</td>
+                    <td>${item.minStock}</td>
+                    <td>${item.optimalStock || '-'}</td>
+                    <td><span class="badge ${item.status}">${getStatusLabel(item.status)}</span></td>
+                    <td>${item.warehouse}</td>
+                    <td>${item.shelfNumber}</td>
+                    <td>${item.lastUpdated ? new Date(item.lastUpdated).toLocaleString('ja-JP') : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterInventory() {
+            renderInventoryTable();
+        }
+
+        function getStockStatus(quantity, minStock) {
+            if (quantity === 0) return 'out-of-stock';
+            if (quantity <= minStock) return 'low-stock';
+            return 'in-stock';
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'out-of-stock': '在庫切れ',
+                'low-stock': '在庫僅少',
+                'in-stock': '在庫あり'
+            };
+            return labels[status] || status;
+        }
+
+        // 履歴テーブル
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+
+            const sortedTransactions = [...transactions].sort((a, b) =>
+                new Date(b.date) - new Date(a.date)
+            );
+
+            tbody.innerHTML = sortedTransactions.map(trans => `
+                <tr>
+                    <td>${trans.date}</td>
+                    <td><span class="history-type ${trans.type}">${trans.type === 'in' ? '入庫' : '出庫'}</span></td>
+                    <td>${trans.materialCode}</td>
+                    <td>${trans.materialName}</td>
+                    <td style="font-weight: 600;">${trans.quantity}</td>
+                    <td>${trans.unit}</td>
+                    <td>${trans.balance}</td>
+                    <td>${trans.remarks || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterHistory() {
+            const dateFrom = document.getElementById('historyDateFrom').value;
+            const dateTo = document.getElementById('historyDateTo').value;
+            const materialCode = document.getElementById('historyMaterialFilter').value;
+            const type = document.getElementById('historyTypeFilter').value;
+
+            const tbody = document.getElementById('historyTableBody');
+
+            const filteredTransactions = transactions.filter(trans => {
+                const matchesDateFrom = !dateFrom || trans.date >= dateFrom;
+                const matchesDateTo = !dateTo || trans.date <= dateTo;
+                const matchesMaterial = !materialCode || trans.materialCode === materialCode;
+                const matchesType = !type || trans.type === type;
+
+                return matchesDateFrom && matchesDateTo && matchesMaterial && matchesType;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            tbody.innerHTML = filteredTransactions.map(trans => `
+                <tr>
+                    <td>${trans.date}</td>
+                    <td><span class="history-type ${trans.type}">${trans.type === 'in' ? '入庫' : '出庫'}</span></td>
+                    <td>${trans.materialCode}</td>
+                    <td>${trans.materialName}</td>
+                    <td style="font-weight: 600;">${trans.quantity}</td>
+                    <td>${trans.unit}</td>
+                    <td>${trans.balance}</td>
+                    <td>${trans.remarks || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ダッシュボード更新
+        function updateDashboard() {
+            // 統計情報
+            const totalMaterials = materials.length;
+            const lowStockCount = materials.filter(m => {
+                const stock = inventory[m.code]?.quantity || 0;
+                return stock <= m.minStock && stock > 0;
+            }).length;
+            const outOfStockCount = materials.filter(m => {
+                const stock = inventory[m.code]?.quantity || 0;
+                return stock === 0;
+            }).length;
+            const totalValue = materials.reduce((sum, m) => {
+                return sum + (inventory[m.code]?.quantity || 0);
+            }, 0);
+
+            const statsHtml = `
+                <div class="stat-card primary">
+                    <div class="stat-value">${totalMaterials}</div>
+                    <div class="stat-label">登録材料数</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-value">${totalMaterials - lowStockCount - outOfStockCount}</div>
+                    <div class="stat-label">在庫正常</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-value">${lowStockCount}</div>
+                    <div class="stat-label">在庫僅少</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-value">${outOfStockCount}</div>
+                    <div class="stat-label">在庫切れ</div>
+                </div>
+            `;
+            document.getElementById('dashboardStats').innerHTML = statsHtml;
+
+            // グラフ更新
+            updateStockTrendChart();
+            updateMaterialStockChart();
+        }
+
+        // 在庫推移グラフ
+        function updateStockTrendChart() {
+            const ctx = document.getElementById('stockTrendChart');
+            if (!ctx) return;
+
+            // 過去30日分のデータを集計
+            const days = 30;
+            const dates = [];
+            const dataByMaterial = {};
+
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toISOString().split('T')[0]);
+            }
+
+            // 材料ごとのデータセット作成（上位5つのみ）
+            const topMaterials = materials.slice(0, 5);
+
+            const datasets = topMaterials.map((material, index) => {
+                const colors = [
+                    'rgb(102, 126, 234)',
+                    'rgb(16, 185, 129)',
+                    'rgb(245, 158, 11)',
+                    'rgb(239, 68, 68)',
+                    'rgb(59, 130, 246)'
+                ];
+
+                const data = dates.map(date => {
+                    const trans = transactions.filter(t =>
+                        t.materialCode === material.code && t.date <= date
+                    );
+                    let balance = 0;
+                    trans.forEach(t => {
+                        balance = t.balance;
+                    });
+                    return balance;
+                });
+
+                return {
+                    label: material.name,
+                    data: data,
+                    borderColor: colors[index],
+                    backgroundColor: colors[index].replace('rgb', 'rgba').replace(')', ', 0.1)'),
+                    tension: 0.4
+                };
+            });
+
+            if (stockTrendChart) {
+                stockTrendChart.destroy();
+            }
+
+            stockTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 材料別在庫グラフ
+        function updateMaterialStockChart() {
+            const ctx = document.getElementById('materialStockChart');
+            if (!ctx) return;
+
+            const labels = materials.map(m => m.name);
+            const data = materials.map(m => inventory[m.code]?.quantity || 0);
+            const minStocks = materials.map(m => m.minStock);
+
+            if (materialStockChart) {
+                materialStockChart.destroy();
+            }
+
+            materialStockChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '現在庫',
+                            data: data,
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                            borderColor: 'rgb(102, 126, 234)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: '最低在庫数',
+                            data: minStocks,
+                            backgroundColor: 'rgba(239, 68, 68, 0.3)',
+                            borderColor: 'rgb(239, 68, 68)',
+                            borderWidth: 2,
+                            type: 'line'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 在庫アラート確認
+        function checkStockAlerts() {
+            const alerts = [];
+
+            materials.forEach(material => {
+                const stock = inventory[material.code]?.quantity || 0;
+                if (stock === 0) {
+                    alerts.push({
+                        type: 'critical',
+                        message: `${material.name}（${material.code}）が在庫切れです`
+                    });
+                } else if (stock <= material.minStock) {
+                    alerts.push({
+                        type: 'warning',
+                        message: `${material.name}（${material.code}）の在庫が最低在庫数を下回っています（現在: ${stock}${material.unit}）`
+                    });
+                }
+            });
+
+            displayAlerts(alerts);
+            displayStockAlertsTable(alerts);
+        }
+
+        function displayAlerts(alerts) {
+            const container = document.getElementById('alertsContainer');
+            container.innerHTML = alerts.slice(0, 5).map(alert => `
+                <div class="alert ${alert.type}">
+                    ${alert.type === 'critical' ? '🔴' : '⚠️'} ${alert.message}
+                </div>
+            `).join('');
+        }
+
+        function displayStockAlertsTable(alerts) {
+            const container = document.getElementById('stockAlerts');
+            if (alerts.length === 0) {
+                container.innerHTML = '<p style="color: #10b981; font-weight: 600;">✓ 現在、在庫アラートはありません</p>';
+            } else {
+                container.innerHTML = `
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>レベル</th>
+                                    <th>メッセージ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${alerts.map(alert => `
+                                    <tr>
+                                        <td><span class="badge ${alert.type === 'critical' ? 'out-of-stock' : 'low-stock'}">${alert.type === 'critical' ? '在庫切れ' : '在庫僅少'}</span></td>
+                                        <td>${alert.message}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        }
+
+        // 通知表示
+        function showNotification(message, type = 'success') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${type === 'success' ? '' : type}`;
+            alertDiv.textContent = message;
+
+            const container = document.getElementById('alertsContainer');
+            container.insertBefore(alertDiv, container.firstChild);
+
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // CSV出力
+        function exportInventoryToCSV() {
+            const headers = ['材料コード', '材料名', '規格', '現在庫', '単位', '最低在庫数', '適正在庫数', '倉庫', '棚番号'];
+            const rows = materials.map(m => {
+                const stock = inventory[m.code]?.quantity || 0;
+                return [
+                    m.code,
+                    m.name,
+                    m.spec,
+                    stock,
+                    m.unit,
+                    m.minStock,
+                    m.optimalStock || '',
+                    m.warehouse,
+                    m.shelfNumber
+                ];
+            });
+
+            downloadCSV('在庫一覧.csv', headers, rows);
+        }
+
+        function exportHistoryToCSV() {
+            const headers = ['日付', '種別', '材料コード', '材料名', '数量', '単位', '在庫残', '備考'];
+            const rows = transactions.map(t => [
+                t.date,
+                t.type === 'in' ? '入庫' : '出庫',
+                t.materialCode,
+                t.materialName,
+                t.quantity,
+                t.unit,
+                t.balance,
+                t.remarks || ''
+            ]);
+
+            downloadCSV('入出庫履歴.csv', headers, rows);
+        }
+
+        function downloadCSV(filename, headers, rows) {
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ].join('\n');
+
+            const bom = '\uFEFF';
+            const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        // Excel出力
+        function exportInventoryToExcel() {
+            const data = materials.map(m => {
+                const stock = inventory[m.code]?.quantity || 0;
+                return {
+                    '材料コード': m.code,
+                    '材料名': m.name,
+                    '規格': m.spec,
+                    '現在庫': stock,
+                    '単位': m.unit,
+                    '最低在庫数': m.minStock,
+                    '適正在庫数': m.optimalStock || '',
+                    '倉庫': m.warehouse,
+                    '棚番号': m.shelfNumber
+                };
+            });
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '在庫一覧');
+            XLSX.writeFile(wb, '在庫一覧.xlsx');
+        }
+
+        function exportHistoryToExcel() {
+            const data = transactions.map(t => ({
+                '日付': t.date,
+                '種別': t.type === 'in' ? '入庫' : '出庫',
+                '材料コード': t.materialCode,
+                '材料名': t.materialName,
+                '数量': t.quantity,
+                '単位': t.unit,
+                '在庫残': t.balance,
+                '備考': t.remarks || ''
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '入出庫履歴');
+            XLSX.writeFile(wb, '入出庫履歴.xlsx');
+        }
+
+        // レポート生成
+        function generateReport() {
+            const dateFrom = document.getElementById('reportDateFrom').value;
+            const dateTo = document.getElementById('reportDateTo').value;
+            const materialCode = document.getElementById('reportMaterial').value;
+
+            let filteredTransactions = transactions;
+
+            if (dateFrom) {
+                filteredTransactions = filteredTransactions.filter(t => t.date >= dateFrom);
+            }
+            if (dateTo) {
+                filteredTransactions = filteredTransactions.filter(t => t.date <= dateTo);
+            }
+            if (materialCode) {
+                filteredTransactions = filteredTransactions.filter(t => t.materialCode === materialCode);
+            }
+
+            const inCount = filteredTransactions.filter(t => t.type === 'in').length;
+            const outCount = filteredTransactions.filter(t => t.type === 'out').length;
+            const inQuantity = filteredTransactions.filter(t => t.type === 'in').reduce((sum, t) => sum + t.quantity, 0);
+            const outQuantity = filteredTransactions.filter(t => t.type === 'out').reduce((sum, t) => sum + t.quantity, 0);
+
+            const statsHtml = `
+                <div class="stat-card success">
+                    <div class="stat-value">${inCount}</div>
+                    <div class="stat-label">入庫回数</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-value">${outCount}</div>
+                    <div class="stat-label">出庫回数</div>
+                </div>
+                <div class="stat-card primary">
+                    <div class="stat-value">${inQuantity.toFixed(2)}</div>
+                    <div class="stat-label">総入庫数量</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-value">${outQuantity.toFixed(2)}</div>
+                    <div class="stat-label">総出庫数量</div>
+                </div>
+            `;
+
+            document.getElementById('reportStats').innerHTML = statsHtml;
+            document.getElementById('reportResult').style.display = 'block';
+
+            // レポートグラフ更新
+            updateReportChart(filteredTransactions);
+        }
+
+        function updateReportChart(filteredTransactions) {
+            const ctx = document.getElementById('reportChart');
+            if (!ctx) return;
+
+            // 日付別の入出庫数量を集計
+            const dateMap = {};
+            filteredTransactions.forEach(t => {
+                if (!dateMap[t.date]) {
+                    dateMap[t.date] = { in: 0, out: 0 };
+                }
+                if (t.type === 'in') {
+                    dateMap[t.date].in += t.quantity;
+                } else {
+                    dateMap[t.date].out += t.quantity;
+                }
+            });
+
+            const dates = Object.keys(dateMap).sort();
+            const inData = dates.map(d => dateMap[d].in);
+            const outData = dates.map(d => dateMap[d].out);
+
+            if (reportChart) {
+                reportChart.destroy();
+            }
+
+            reportChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: '入庫数量',
+                            data: inData,
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgb(16, 185, 129)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: '出庫数量',
+                            data: outData,
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderColor: 'rgb(239, 68, 68)',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
