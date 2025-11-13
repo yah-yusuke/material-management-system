@@ -3,22 +3,26 @@
   "version": "1.0.0",
   "description": "材料在庫管理システム - React版",
   "type": "module",
+  "homepage": "https://yah-yusuke.github.io/material-management-system",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "chart.js": "^4.4.0",
-    "react-chartjs-2": "^5.2.0",
-    "xlsx": "^0.18.5",
     "html5-qrcode": "^2.3.8",
-    "qrcode": "^1.5.3"
+    "qrcode": "^1.5.3",
+    "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",
+    "gh-pages": "^6.3.0",
     "vite": "^5.0.0"
   }
 }
