@@ -24,6 +24,24 @@ Excelファイルから発注チェックリストと仕入チェックリスト
 
 上記の在庫管理システムをReactで実装したモダンなSPAバージョンです。同じ機能をReactのコンポーネントベースで提供します。
 
+### 4. 🔌 バックエンドAPI + データベース (`backend/`)
+
+SQLiteデータベースを使用したRESTful APIサーバー。フロントエンドアプリケーションにデータ永続化と高度な機能を提供します。
+
+**主要機能:**
+- 🔐 JWT認証
+- 📦 材料マスタ管理API
+- 📋 在庫管理API
+- 📥📤 入出庫トランザクションAPI
+- 🛒 発注管理API
+- 🔔 自動アラート生成
+- 📊 高度なレポート機能
+  - ABC分析（使用金額ベース）
+  - 在庫回転率計算
+  - 自動発注推奨リスト
+- 📝 監査ログ
+- 💾 SQLiteデータベース
+
 **主要機能:**
 
 #### 📝 材料マスタ管理
@@ -114,6 +132,32 @@ Excelファイルから発注チェックリストと仕入チェックリスト
 4. ブラウザで `http://localhost:5173` を開く
 5. サンプルデータが自動的に読み込まれます
 
+### バックエンドAPI
+1. プロジェクトディレクトリに移動
+   ```bash
+   cd backend
+   ```
+2. 依存関係をインストール
+   ```bash
+   npm install
+   ```
+3. データベースを初期化
+   ```bash
+   npm run init-db
+   ```
+4. サーバーを起動
+   ```bash
+   npm start  # または npm run dev（ホットリロード）
+   ```
+5. APIサーバーが `http://localhost:3000` で起動
+
+**主要APIエンドポイント:**
+- `/api/materials` - 材料マスタ
+- `/api/inventory` - 在庫管理
+- `/api/transactions` - 入出庫
+- `/api/reports/abc-analysis` - ABC分析
+- `/api/reports/reorder-suggestions` - 発注推奨
+
 ## セットアップ
 
 ```bash
@@ -138,6 +182,14 @@ cd material-management-system
 - Excelライブラリ: SheetJS (xlsx)
 - スタイリング: Vanilla CSS
 - データ永続化: localStorage API
+
+### バックエンドAPI（backend/）
+- ランタイム: Node.js
+- フレームワーク: Express
+- データベース: SQLite（better-sqlite3）
+- 認証: JWT（jsonwebtoken）
+- セキュリティ: bcryptjs, helmet, cors
+- その他: compression, dotenv
 
 ## ブラウザ対応
 
