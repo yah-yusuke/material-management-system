@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#667eea">
+    <title>QRコード在庫管理</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2d3748;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            line-height: 1.6;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #10b981;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            color: #856404;
+            margin-top: 20px;
+        }
+
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }
+
+        .steps li {
+            counter-increment: step;
+            padding: 12px 12px 12px 50px;
+            margin-bottom: 10px;
+            position: relative;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        code {
+            background: #2d3748;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 QRコード在庫管理</h1>
+            <p>iPhoneで2次元コードを読み取り在庫管理</p>
+        </div>
+
+        <div class="card">
+            <div class="info-box">
+                <h3>⚠️ HTTPS接続が必要です</h3>
+                <p>iPhoneのカメラを使用するには、セキュアな接続（HTTPS）が必要です。</p>
+                <p>ローカルファイル（file://）では動作しません。</p>
+            </div>
+
+            <h3 style="margin-bottom: 15px; color: #2d3748;">✅ 推奨：オンラインで使用</h3>
+
+            <a href="inventory-qr.html" class="btn">
+                📱 アプリを開く
+            </a>
+
+            <div class="warning">
+                <strong>注意：</strong> このボタンが動作しない場合は、以下の方法をお試しください。
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px; color: #2d3748;">📖 使い方（HTTPS環境で）</h3>
+
+            <ol class="steps">
+                <li>Webサーバーでこのファイルをホスティング</li>
+                <li>HTTPS接続でアクセス</li>
+                <li>「スキャン開始」をタップ</li>
+                <li>カメラ許可を承認</li>
+                <li>QRコード/バーコードをスキャン</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px; color: #2d3748;">🚀 簡単セットアップ方法</h3>
+
+            <h4 style="margin: 15px 0 10px; color: #667eea;">方法1: GitHub Pages（無料・推奨）</h4>
+            <ol class="steps">
+                <li>GitHubリポジトリの Settings を開く</li>
+                <li>左メニューの Pages をクリック</li>
+                <li>Source で Branch を選択（例：main または claude/qr-inventory-app-spsRg）</li>
+                <li>Save をクリック</li>
+                <li>数分後、URLが発行されます</li>
+            </ol>
+
+            <h4 style="margin: 15px 0 10px; color: #667eea;">方法2: ローカルHTTPSサーバー</h4>
+            <p style="margin-bottom: 10px;">macOS/Linux:</p>
+            <pre style="background: #2d3748; color: #fff; padding: 15px; border-radius: 8px; overflow-x: auto; margin-bottom: 15px;"><code>python3 -m http.server 8000</code></pre>
+            <p style="color: #64748b; font-size: 0.9em;">ブラウザで <code>http://localhost:8000/inventory-qr.html</code> を開く</p>
+            <p style="color: #dc2626; font-size: 0.9em; margin-top: 10px;">※ただし、カメラ機能はHTTPSが必要なため、ngrokなどのトンネリングサービスを使用してください</p>
+
+            <h4 style="margin: 15px 0 10px; color: #667eea;">方法3: ngrok（HTTPSトンネル）</h4>
+            <ol class="steps">
+                <li>ngrokをインストール（<a href="https://ngrok.com" target="_blank" style="color: #667eea;">ngrok.com</a>）</li>
+                <li>ローカルサーバーを起動: <code>python3 -m http.server 8000</code></li>
+                <li>ngrokでトンネル: <code>ngrok http 8000</code></li>
+                <li>表示されたHTTPS URLにアクセス</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 15px; color: #2d3748;">🎯 主な機能</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">📷 QRコード/バーコードスキャン</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">🏷️ 社内呼び名で商品管理</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">📊 在庫数の増減管理</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">🔍 商品検索機能</li>
+                <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;">📈 在庫統計表示</li>
+                <li style="padding: 8px 0;">💾 CSVエクスポート</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
